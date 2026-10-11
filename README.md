@@ -41,10 +41,20 @@ python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install -e .
 python -m unittest discover -s tests -v
-python -m quant_toss.demo --output artifacts/first_demo
+python -m quant_toss.demo --output artifacts/first_demo --open
 ```
 
 데모는 실제 가격이 아닌 1,100개 합성 거래일을 생성하고 linear/transformer를 각각 2 epochs 학습합니다. checkpoint, 예측 보고서, 비용 차감 모의매매 ledger와 최종 forecast를 저장합니다. 같은 명령을 다시 실행할 때는 새 output 이름을 사용하세요.
+
+`--open`은 완료 후 브라우저에서 **결과 보고서**를 엽니다. 가격 흐름, 학습 오차, 1·5·20 거래일 예측 범위, 모델 비교와 모의매매 결과를 표시합니다. 실시간 시세 화면이나 주문 화면은 아닙니다. 브라우저를 열 수 없는 환경에서는 `--open`을 빼고 실행한 뒤 생성된 `report.html`을 직접 여세요.
+
+이미 데모를 실행했다면 재학습 없이 결과를 볼 수 있습니다:
+
+```bash
+python -m quant_toss.report --input artifacts/first_demo --open
+```
+
+학습 완료 후 터미널이 명령 입력 상태로 돌아가는 것은 정상입니다. 기존 출력 폴더로 다시 학습하면 파일 보호를 위해 중단하고 새 폴더 이름을 안내합니다.
 
 ```text
 artifacts/first_demo/
@@ -55,6 +65,7 @@ artifacts/first_demo/
   transformer/report.json
   transformer/ledger.json
   forecast.json
+  report.html
 ```
 
 합성 데모에서는 보수적인 거래 조건을 충족하지 않아 두 모델 모두 거래 0회, 모의 수익률 0%가 나왔습니다. 이것은 수익성 검증이 아닙니다. 정책을 바꿔 높은 숫자를 만들기보다 실제 OOS 데이터로 전략 가설을 검증해야 합니다.
@@ -142,6 +153,7 @@ src/quant_toss/
   toss.py       # official read-only market-data adapter
   cli.py        # research / walk-forward / predict / fetch-toss
   demo.py       # no-key offline integration and linear comparison
+  report.py     # standalone HTML charts, forecast ranges and paper results
 tests/          # temporal leakage, gradients, accounting, API transport checks
 ```
 

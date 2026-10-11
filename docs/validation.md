@@ -13,4 +13,6 @@ No real market benchmark, actual profit, live order execution, or evidence of mo
 
 The stored synthetic demo reports are reproducible through `python -m quant_toss.demo --output artifacts/new_run`. Artifacts and credentials are excluded from source publication.
 
-GitHub CI is configured, not claimed as passed until its hosted run is checked.
+GitHub CI passed for the initial published implementation: [run #1](https://github.com/yokioryonghee/quant-toss/actions/runs/38127483491), commit `6d6ccbb`. A fresh Ubuntu / Python 3.11 install completed all 10 unit tests and the offline training/backtest demo.
+
+The standalone HTML report was generated locally both from a previously completed demo and from a fresh end-to-end run. It displays the stored input prices, validation loss, calibrated forecast ranges, comparison metrics and paper ledger. The browser-open option is optional; CI renders the file without opening a browser.

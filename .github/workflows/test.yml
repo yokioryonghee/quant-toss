@@ -24,3 +24,5 @@ jobs:
             artifacts/ci/linear/report.json
             artifacts/ci/transformer/report.json
             artifacts/ci/forecast.json
+            artifacts/ci/report.html
+            artifacts/ci/transformer/ledger.json
