@@ -1,3 +1,4 @@
+import csv
 import hashlib
 import json
 import random
@@ -19,6 +20,13 @@ def write_json(path, value):
 
 
 def verify_identity(path, symbol, currency):
+    rows=[]
+    if Path(path).is_file():
+        with open(path, newline='') as handle:
+            rows = list(csv.DictReader(handle))
+    for key, expected in [('symbol',symbol),('currency',currency)]:
+        if rows and key in rows[0] and {row[key] for row in rows} != {expected}:
+            raise ValueError(f'CSV {key} differs from model/research identity')
     metadata_path = Path(path).with_suffix('.meta.json')
     if metadata_path.exists():
         metadata = json.loads(metadata_path.read_text())
@@ -189,3 +197,4 @@ def predict(csv_path, checkpoint_path):
             'mixture_weights': result['regime_weights'][0].tolist(),
             'feature_weights': dict(zip(FEATURES, result['feature_weights'][0].tolist())) if result['feature_weights'] is not None else None,
             'live_order_submitted': False}
+

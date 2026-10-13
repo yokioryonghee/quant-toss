@@ -172,3 +172,6 @@ tests/          # temporal leakage, gradients, accounting, API transport checks
 - [Temporal Fusion Transformers](https://arxiv.org/abs/1912.09363): temporal feature gating과 multi-horizon forecasting의 참고. 이 코드는 TFT의 논문 재현이 아닙니다.
 
 MIT licensed. Toss Securities의 공식 제품이나 제휴 서비스가 아닌 독립 연구 프로젝트입니다.
+
+
+CSV에 symbol/currency 열이 있으면 실행 설정·checkpoint와 일치하는지도 검사합니다. 예측 분포의 순서와 실제 체결 인덱스/가격을 검증하고 잘못된 입력을 중단합니다.

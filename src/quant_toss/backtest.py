@@ -23,6 +23,8 @@ class Policy:
 def target_exposure(quantiles, policy):
     policy.validate()
     q10, median, q90 = quantiles
+    if not np.isfinite([q10,median,q90]).all() or not q10 <= median <= q90:
+        raise ValueError('Finite ordered quantiles required')
     round_trip = (2 * policy.cost_bps + policy.sell_tax_bps + policy.min_edge_bps) / 10000
     # Explicit conservative long/cash rule, no shorting or leverage.
     return policy.max_exposure if q10 > round_trip and median > round_trip else 0.
@@ -38,13 +40,21 @@ def simulate(bars, indices, quantiles, policy):
     policy.validate()
     if len(indices) != len(quantiles) or len(indices) == 0 or not np.isfinite(quantiles).all():
         raise ValueError('Invalid backtest predictions')
+    indices=np.asarray(indices)
+    if indices.ndim!=1 or not np.issubdtype(indices.dtype,np.integer) or indices.min()<0 or indices.max()+1>=len(bars.dates):
+        raise ValueError('Invalid signal indices')
+    if np.asarray(quantiles).shape!=(len(indices),3):
+        raise ValueError('Expected (sessions,3) quantiles')
     if (np.diff(indices) != 1).any():
         raise ValueError('Daily simulation requires consecutive trading-session signals')
     equity, peak, halted, ledger = 1., 1., False, []
     for i, prediction in zip(indices, quantiles):
         i = int(i)
         weight = 0. if halted else target_exposure(prediction, policy)
-        realized = bars.prices[i + 1, 3] / bars.prices[i + 1, 0] - 1
+        opening, closing = bars.prices[i + 1, 0], bars.prices[i + 1, 3]
+        if not np.isfinite([opening,closing]).all() or min(opening,closing)<=0:
+            raise ValueError('Finite positive execution prices required')
+        realized = closing / opening - 1
         buy_rate = policy.cost_bps / 10000
         sell_rate = (policy.cost_bps + policy.sell_tax_bps) / 10000
         # Buy with a fraction of equity inclusive of buy costs; liquidate
@@ -67,3 +77,4 @@ def simulate(bars, indices, quantiles, policy):
             'halted': halted, 'policy': asdict(policy),
             'scope': 'single asset; close signal, next-open entry, next-close exit; fractional notional',
             'ledger': ledger}
+
