@@ -59,8 +59,10 @@ def features(bars):
 def split_indices(n, lookback, max_horizon, embargo=5, boundaries=None):
     if lookback < 8 or max_horizon < 1 or embargo < 0:
         raise ValueError('Invalid lookback/horizon/embargo')
+    if any(not isinstance(v, (int, np.integer)) for v in (n,lookback,max_horizon,embargo)):
+        raise ValueError('Integer session parameters required')
     bounds = boundaries or [int(n * .6), int(n * .75), int(n * .85), n]
-    if len(bounds) != 4 or not 0 < bounds[0] < bounds[1] < bounds[2] < bounds[3] <= n:
+    if len(bounds) != 4 or any(not isinstance(v,(int,np.integer)) for v in bounds) or not 0 < bounds[0] < bounds[1] < bounds[2] < bounds[3] <= n:
         raise ValueError('Invalid chronological boundaries')
     splits, start = {}, 20 + lookback - 1
     for name, stop in zip(('train', 'val', 'calibration', 'test'), bounds):
@@ -94,3 +96,4 @@ class Windows(Dataset):
         target = [(self.bars.prices[i + h, 3] / self.bars.prices[i + 1, 0] - 1) * 100
                   for h in self.horizons]
         return torch.from_numpy(window.copy()), torch.tensor(target, dtype=torch.float32)
+
