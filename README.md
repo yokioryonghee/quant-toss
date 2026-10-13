@@ -34,24 +34,81 @@ flowchart LR
 
 ## 설치와 바로 실행
 
-이 저장소 루트에서 Python 3.10+로 실행합니다. CPU만으로 데모가 동작합니다.
+Python 3.10 이상이 필요하며 CPU만으로 데모가 동작합니다. **이 명령은 `quant-toss` 전용입니다.** `tradingBot3`나 `quantitative-trading-engine` 폴더에서 실행하지 마세요. 아래 명령은 각 프로젝트의 가상환경 활성화 상태와 관계없이 `quant-toss/.venv`의 Python을 직접 사용합니다.
+
+### 처음 내려받아 실행 — macOS / Linux
+
+Git과 Python 3.10 이상이 설치된 상태에서 아래 블록 전체를 실행하세요. 설치에 실패하면 다음 단계로 넘어가지 않습니다. 이미 `~/quant-toss`가 있다면 다음의 기존 저장소 실행 절차를 사용하세요.
 
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install -e .
-python -m unittest discover -s tests -v
-python -m quant_toss.demo --output artifacts/first_demo --open
+(
+  set -e
+  if command -v deactivate >/dev/null 2>&1; then deactivate; fi
+  cd ~
+  git clone https://github.com/yokioryonghee/quant-toss.git
+  cd quant-toss
+  python3 -m venv .venv
+  ./.venv/bin/python -m pip install --upgrade pip
+  ./.venv/bin/python -m pip install -e .
+  ./.venv/bin/python -m unittest discover -s tests -v
+  ./.venv/bin/python -m quant_toss.demo --output "artifacts/demo_$(date +%Y%m%d_%H%M%S)" --open
+)
 ```
+
+출력 폴더 이름에 시간을 붙여 재실행 시 기존 결과와 겹치지 않게 합니다.
+
+### 이미 내려받은 저장소 — macOS / Linux
+
+기본 위치 `~/quant-toss`를 기준으로 합니다. 다른 곳에 내려받았다면 첫 `cd` 경로만 실제 `quant-toss` 폴더로 바꾸세요.
+
+```bash
+(
+  set -e
+  if command -v deactivate >/dev/null 2>&1; then deactivate; fi
+  cd ~/quant-toss
+  test -f pyproject.toml
+  git pull --ff-only
+  if [ ! -x .venv/bin/python ]; then python3 -m venv .venv; fi
+  ./.venv/bin/python -m pip install -e .
+  ./.venv/bin/python -m unittest discover -s tests -v
+  ./.venv/bin/python -m quant_toss.demo --output "artifacts/demo_$(date +%Y%m%d_%H%M%S)" --open
+)
+```
+
+`python3 --version`이 3.10 미만이면 먼저 지원 버전을 설치하세요. pyenv가 다른 프로젝트의 설정 때문에 Python을 찾지 못하면 설치된 3.10 이상 버전을 `PYENV_VERSION`으로 지정해 가상환경을 생성하세요(예: 3.11.8이 설치되어 있다면 `PYENV_VERSION=3.11.8 python -m venv .venv`).
+
+### Windows PowerShell — 처음 설치
+
+```powershell
+cd $HOME
+git clone https://github.com/yokioryonghee/quant-toss.git
+if ($LASTEXITCODE -ne 0) { throw "Clone failed; use your existing quant-toss folder." }
+cd quant-toss
+py -3.11 -m venv .venv
+if ($LASTEXITCODE -ne 0) { throw "Python 3.11 is required for this command." }
+.\.venv\Scripts\python.exe -m pip install -e .
+if ($LASTEXITCODE -ne 0) { throw "Installation failed." }
+.\.venv\Scripts\python.exe -m unittest discover -s tests -v
+if ($LASTEXITCODE -ne 0) { throw "Tests failed." }
+$demoOutput = "artifacts/demo_" + (Get-Date -Format "yyyyMMdd_HHmmss")
+.\.venv\Scripts\python.exe -m quant_toss.demo --output $demoOutput --open
+```
+
+### 오류가 나면
+
+- `neither setup.py nor pyproject.toml found`: 다른 프로젝트 폴더에서 설치한 것입니다. `quant-toss/pyproject.toml`이 있는 폴더로 이동하세요.
+- `No module named quant_toss`: 설치 실패 여부를 확인하고 해당 프로젝트의 `./.venv/bin/python -m pip install -e .`를 실행하세요.
+- `Start directory is not importable: tests`: 현재 위치에 이 저장소의 `tests/`가 있는지 확인하세요.
+- `examples/comprehensive_analysis.py`는 `quantitative-trading-engine`의 실행 파일입니다. `quant-toss`는 `quant_toss.demo`, `tradingBot3`는 `streamlit run app.py`를 사용합니다.
 
 데모는 실제 가격이 아닌 1,100개 합성 거래일을 생성하고 linear/transformer를 각각 2 epochs 학습합니다. checkpoint, 예측 보고서, 비용 차감 모의매매 ledger와 최종 forecast를 저장합니다. 같은 명령을 다시 실행할 때는 새 output 이름을 사용하세요.
 
 `--open`은 완료 후 브라우저에서 **결과 보고서**를 엽니다. 가격 흐름, 학습 오차, 1·5·20 거래일 예측 범위, 모델 비교와 모의매매 결과를 표시합니다. 실시간 시세 화면이나 주문 화면은 아닙니다. 브라우저를 열 수 없는 환경에서는 `--open`을 빼고 실행한 뒤 생성된 `report.html`을 직접 여세요.
 
-이미 데모를 실행했다면 재학습 없이 결과를 볼 수 있습니다:
+이미 데모를 실행했다면 `quant-toss` 폴더에서 재학습 없이 결과를 볼 수 있습니다. `artifacts/first_demo`를 실제 생성된 출력 폴더 경로로 바꾸세요:
 
 ```bash
-python -m quant_toss.report --input artifacts/first_demo --open
+./.venv/bin/python -m quant_toss.report --input artifacts/first_demo --open
 ```
 
 학습 완료 후 터미널이 명령 입력 상태로 돌아가는 것은 정상입니다. 기존 출력 폴더로 다시 학습하면 파일 보호를 위해 중단하고 새 폴더 이름을 안내합니다.
